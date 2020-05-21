@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace LinqConsoleApp
 {
@@ -205,8 +208,9 @@ namespace LinqConsoleApp
                           Zawod = emp.Job
                       };
 
-
             //2. Lambda and Extension methods
+            var res2 = Emps.Where(emp => emp.Job == "Backend programmer").ToList();
+            DisplayResult(res2);
         }
 
         /// <summary>
@@ -214,8 +218,9 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad2()
         {
-            
-
+            var res = Emps.Where(emp => emp.Job == "Frontend programmer" && emp.Salary > 1000)
+                .OrderByDescending(emp => emp.Ename).ToList();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -223,7 +228,8 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad3()
         {
-          
+            var res = Emps.Max(emp => emp.Salary).ToString();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -231,7 +237,8 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad4()
         {
-
+               var res = Emps.Where(emp => emp.Salary == Emps.Max(e => e.Salary)).ToList();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -239,7 +246,11 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad5()
         {
-
+            var res = Emps.Where(emp => emp.Job == "Frontend programmer" && emp.Salary > 1000)
+                .OrderByDescending(emp => emp.Ename)
+                .Select(emp => new {Nazwisko = emp.Ename})
+                .ToList();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -249,7 +260,10 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad6()
         {
-
+            var res = Emps.Join(Depts, emp => emp.Deptno, dep => dep.Deptno, 
+                    (emp, dept) => new {emp.Ename, emp.Job, dept.Dname})
+                .ToList();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -257,7 +271,14 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad7()
         {
-
+            var res = Emps.GroupBy(emp => emp.Job)
+                .Select( group => new
+                {
+                    Praca = group.Key, 
+                    LiczbaPracownikow = group.Count()
+                })
+                .ToList();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -266,7 +287,8 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad8()
         {
-
+            var res = Emps.Any(emp => emp.Job == "Backend programmer").ToString();
+            DisplayResult(res);
         }
 
         /// <summary>
@@ -275,7 +297,10 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad9()
         {
-
+            var res = Emps.Where(emp => emp.Job == "Frontend programmer")
+                .OrderByDescending(emp => emp.HireDate)
+                .FirstOrDefault();
+            DisplayResult(new List<Emp>(){res});
         }
 
         /// <summary>
@@ -285,20 +310,55 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad10Button_Click()
         {
-
+            var res = Emps.Select(emp => new {emp.Ename, emp.Job, emp.HireDate })
+                .Union(new[] {new {Ename = "Brak wartości", Job = (string) null, HireDate = (DateTime?) null }}).ToList();
+            DisplayResult(res);
         }
 
         //Znajdź pracownika z najwyższą pensją wykorzystując metodę Aggregate()
         public void Przyklad11()
         {
-
+            var res = Emps.Aggregate((curr, next) => next.Salary > curr.Salary ? next : curr);
+            DisplayResult(new List<Emp>() {res});
         }
 
         //Z pomocą języka LINQ i metody SelectMany wykonaj złączenie
         //typu CROSS JOIN
         public void Przyklad12()
         {
+            var res = Emps.SelectMany(emp => Depts, (emp, dept) => new {emp, dept.Dname}).ToList();
+            DisplayResult(res);
+        }
 
+        private void DisplayResult<T>(List<T> list)
+        {
+            var bindingList = new BindingList<T>(list);
+            var source = new BindingSource(bindingList, null);
+            var dataGrid = new DataGridView
+            {
+                DataSource = source
+            };
+            ShowForm(dataGrid);
+        }
+
+        private void DisplayResult(string result)
+        {
+            var textBox = new TextBox
+            {
+                Text = result
+            };
+            ShowForm(textBox);
+        }
+
+        private void ShowForm(Control control)
+        {
+            using (var form = new Form())
+            {
+                control.Dock = System.Windows.Forms.DockStyle.Fill;
+                form.Controls.Add(control);
+                form.Width = 800;
+                form.ShowDialog();
+            }
         }
     }
 }
